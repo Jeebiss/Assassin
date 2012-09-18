@@ -1,0 +1,8 @@
+name: Assassin
+main: me.Jeebiss.Assassin.Assassin
+version: 0.1
+depend: [Citizens]
+
+commands:
+   assassin:
+      description: Assassin commands.
