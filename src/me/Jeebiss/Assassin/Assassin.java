@@ -5,8 +5,10 @@ import net.citizensnpcs.api.npc.NPC;
 import net.citizensnpcs.api.trait.TraitInfo;
 
 import org.bukkit.ChatColor;
+import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class Assassin extends JavaPlugin {
@@ -22,13 +24,22 @@ public class Assassin extends JavaPlugin {
 	@Override
 	public boolean onCommand(CommandSender sender, Command cmd, String cmdLabel, String[] inargs) {
 
-		if (inargs[0] == null){
-			return false;
+		if (inargs.length < 1) {
+			sender.sendMessage(ChatColor.RED + "Use /assassin help for command reference.");
+			return true;
 		}
 		
 		if (inargs[0].equalsIgnoreCase("reload")) {
 			this.reloadMyConfig();
 			sender.sendMessage(ChatColor.GREEN + "reloaded!");
+			return true; //return true if you have handled a command
+		}
+		
+		if (inargs[0].equalsIgnoreCase("help")) {
+			sender.sendMessage(ChatColor.WHITE + "Assassin Help!");
+			sender.sendMessage(ChatColor.RED + "===================");
+			sender.sendMessage(ChatColor.RED + "/assassin settarget <name>");
+			sender.sendMessage(ChatColor.WHITE + "Set the assassin's current target");
 			return true; //return true if you have handled a command
 		}
 
@@ -40,18 +51,17 @@ public class Assassin extends JavaPlugin {
 		int npcid = -1;
 		int i = 0;
 		//did player specify a id?
-		try{
+		try {
 			npcid = Integer.parseInt(inargs[0]);
 			i = 1;
 		}
-		catch(Exception e){
+		catch (Exception e){
 		}	
 		//reprocess the args to remove the NPC indicator. 
 		String[] args = new String[inargs.length-i];
 		for (int j = i; j < inargs.length; j++) {
 			args[j-i] = inargs[j];
 		}
-
 
 		//Now lets find the NPC this should run on.
 		NPC npc;
@@ -88,11 +98,21 @@ public class Assassin extends JavaPlugin {
 
 
 
-		if (args[0].equalsIgnoreCase("somecommand")) {
-			//Do something to the NPC or trait
-
+		if (args[0].equalsIgnoreCase("settarget")) {
+			if (args.length < 1 && npc.isSpawned()){
+				Player target = this.getServer().getPlayer(args[1]);
+				if (target != null && target.isOnline()){
+					if (npc.getBukkitEntity().getLocation().getWorld() == target.getLocation().getWorld()){
+						Player confirmedTarget = target;
+						String confirmedTargetSt = target.getName();
+					}
+				}
+				sender.sendMessage(ChatColor.RED + "That player is not online.");
+			}
+			sender.sendMessage(ChatColor.RED + "You need to specify a target.");
 			return true;
 		}
+		
 
 		return false; // do this if you didn't handle the command.
 	}
