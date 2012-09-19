@@ -2,6 +2,8 @@ package me.Jeebiss.Assassin;
 
 import org.bukkit.Bukkit;
 import org.bukkit.event.EventHandler;
+
+import net.citizensnpcs.api.event.NPCClickEvent;
 import net.citizensnpcs.api.trait.Trait;
 import net.citizensnpcs.api.util.DataKey;
 
@@ -11,7 +13,7 @@ import net.citizensnpcs.api.util.DataKey;
 public class AssassinTrait extends Trait {
 
 	public AssassinTrait() {
-		super("AssassinTrait");
+		super("Assassin");
 		plugin = (Assassin) Bukkit.getServer().getPluginManager().getPlugin("Assassin");
 	}
 
@@ -33,10 +35,12 @@ public class AssassinTrait extends Trait {
 	}
 
 	@EventHandler
-	public void click(net.citizensnpcs.api.event.NPCClickEvent event){
+	public void click(NPCClickEvent event){
 		//Handle a click on a NPC. The event has a getNPC() method. 
 		//Be sure to check event.getNPC() == this.getNPC() so you only handle clicks on this NPC!
-
+		if(event.getNPC() == this.getNPC()){
+			npc.getNavigator();
+		}
 	}
 
 
