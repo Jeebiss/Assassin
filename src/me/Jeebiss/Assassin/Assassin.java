@@ -5,7 +5,6 @@ import net.citizensnpcs.api.npc.NPC;
 import net.citizensnpcs.api.trait.TraitInfo;
 
 import org.bukkit.ChatColor;
-import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -32,48 +31,42 @@ public class Assassin extends JavaPlugin {
 		if (inargs[0].equalsIgnoreCase("reload")) {
 			this.reloadMyConfig();
 			sender.sendMessage(ChatColor.GREEN + "reloaded!");
-			return true; //return true if you have handled a command
+			return true;
 		}
 		
 		if (inargs[0].equalsIgnoreCase("help")) {
 			sender.sendMessage(ChatColor.WHITE + "Assassin Help!");
-			sender.sendMessage(ChatColor.RED + "===================");
+			sender.sendMessage(ChatColor.WHITE + "===================");
 			sender.sendMessage(ChatColor.RED + "/assassin settarget <name>");
 			sender.sendMessage(ChatColor.WHITE + "Set the assassin's current target");
-			return true; //return true if you have handled a command
+			sender.sendMessage(ChatColor.RED + "/assassin go");
+			sender.sendMessage(ChatColor.WHITE + "Assassinate target!!!");
+			sender.sendMessage(ChatColor.RED + "/assassin stop");
+			sender.sendMessage(ChatColor.WHITE + "Stops assassin from tracking the target.");
+			
+			return true; 
 		}
 
-
-
-		//This block of code will allow your users to specify 
-		// /myplugin [command] OR /myplugin # [command]
-		//The first will run the command on the selected NPC, the second on the NPC with npcID #.
 		int npcid = -1;
 		int i = 0;
-		//did player specify a id?
 		try {
 			npcid = Integer.parseInt(inargs[0]);
 			i = 1;
 		}
 		catch (Exception e){
 		}	
-		//reprocess the args to remove the NPC indicator. 
 		String[] args = new String[inargs.length-i];
 		for (int j = i; j < inargs.length; j++) {
 			args[j-i] = inargs[j];
 		}
 
-		//Now lets find the NPC this should run on.
 		NPC npc;
 		if (npcid == -1){
-			//sneder didn't specify an id, use his selected NPC.
 			npc =	((Citizens)	this.getServer().getPluginManager().getPlugin("Citizens")).getNPCSelector().getSelected(sender);
 			if(npc != null ){
-				// Gets NPC Selected for this sender
 				npcid = npc.getId();
 			}
 			else{
-				//no NPC selected.
 				sender.sendMessage(ChatColor.RED + "You must have a NPC selected to use this command");
 				return true;
 			}			
@@ -81,50 +74,62 @@ public class Assassin extends JavaPlugin {
 
 		npc = CitizensAPI.getNPCRegistry().getById(npcid); 
 		if (npc == null) {
-			//speicifed number doesn't exist.
 			sender.sendMessage(ChatColor.RED + "NPC with id " + npcid + " not found");
 			return true;
 		}
 
 
-		//	If you need access to the instance of MyTrait on the npc, get it like this
 		AssassinTrait trait = null;
 		if (!npc.hasTrait(AssassinTrait.class)) {
 			sender.sendMessage(ChatColor.RED + "That command must be performed on a npc with trait: " + AssassinTrait.class.toString() );
 			return true;
 		}
 		else trait = npc.getTrait(AssassinTrait.class);
-		//
 
-
-
-		if (args[0].equalsIgnoreCase("settarget")) {
-			if (args.length < 1 && npc.isSpawned()){
-				Player target = this.getServer().getPlayer(args[1]);
-				if (target != null && target.isOnline()){
-					if (npc.getBukkitEntity().getLocation().getWorld() == target.getLocation().getWorld()){
-						Player confirmedTarget = target;
-						String confirmedTargetSt = target.getName();
-					}
-				}
-				sender.sendMessage(ChatColor.RED + "That player is not online.");
-			}
-			sender.sendMessage(ChatColor.RED + "You need to specify a target.");
+		if (args.length < 1){
+			sender.sendMessage(ChatColor.RED + "Use /assassin help for command reference.");
 			return true;
 		}
 		
-
-		return false; // do this if you didn't handle the command.
+		if (args[0].equalsIgnoreCase("settarget")) {
+			if (npc.isSpawned()){
+				Player target = this.getServer().getPlayer(args[1]);
+				if (target != null && target.isOnline()){
+					if (npc.getBukkitEntity().getLocation().getWorld() == target.getLocation().getWorld()){
+						trait.confirmedTarget = target;
+						String confirmedTargetSt = target.getName();
+						sender.sendMessage(ChatColor.RED + "You've targeted " + confirmedTargetSt + ".");
+					} else sender.sendMessage(ChatColor.RED + "Target needs to be in the same world.");
+				} else sender.sendMessage(ChatColor.RED + "Player is not online.");
+			} else sender.sendMessage(ChatColor.RED + "Assassin is not spawned.");
+			return true;
+		}
+		
+		if (args[0].equalsIgnoreCase("go")){
+			if (npc.isSpawned()){
+				if (trait.confirmedTarget != null){
+					if (trait.isKillable(trait.confirmedTarget)){
+						npc.getNavigator().setTarget(trait.confirmedTarget, true);
+					} else sender.sendMessage(ChatColor.RED + "Target is either offline, or in a different world. Can not assassinate.");
+				} else sender.sendMessage(ChatColor.RED + "No target selected.");
+			}
+		}
+		
+		if (args[0].equalsIgnoreCase("stop")){
+			if(npc.getNavigator().isNavigating()){
+				npc.getNavigator().cancelNavigation();
+				sender.sendMessage(ChatColor.RED + "Assassin stopped.");
+			} else sender.sendMessage(ChatColor.RED + "Assassin isnt tracking the target.");
+		}
+		return false;
 	}
 	
 	public String SomeChatString = "";
 
 	private void reloadMyConfig(){
-		//This copies the config.yml included in your .jar to the folder for this plugin, only if it does not exist.
 		this.saveDefaultConfig();
-		//load this config.yml into memory
 		this.reloadConfig();
-		//get default settings
 		SomeChatString = this.getConfig().getString("SomeChatString");
 	}
+	
 }

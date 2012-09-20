@@ -1,15 +1,13 @@
 package me.Jeebiss.Assassin;
 
 import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 
 import net.citizensnpcs.api.event.NPCClickEvent;
 import net.citizensnpcs.api.trait.Trait;
 import net.citizensnpcs.api.util.DataKey;
 
-//This is your trait that will be applied to a npc using the /trait mytraitname command. Each NPC gets its own instance of this class.
-//the Trait class has a reference to the attached NPC class through 'npc' or getNPC().
-//The Trait class also implements Listener so you can add EventHandlers directly to your trait.
 public class AssassinTrait extends Trait {
 
 	public AssassinTrait() {
@@ -18,28 +16,23 @@ public class AssassinTrait extends Trait {
 	}
 
 	Assassin plugin = null;
+	Player confirmedTarget = null;
+	String confirmedTargetSt = null;
+	
 
-	boolean SomeSetting = false;
-
-	//Here you should load up any values you have previously saved. 
-      //This does NOT get called when applying the trait for the first time, only loading onto an existing npc at server start.
-      //This is called AFTER onAttach so you can load defaults in onAttach and they will be overridden here.
-      //This is called BEFORE onSpawn so do not try to access npc.getBukkitEntity(). It will be null.
 	public void load(DataKey key) {
-		SomeSetting = key.getBoolean("SomeSetting", false);
+		confirmedTargetSt = (key.getString("assassinTarget", null));
 	}
 
-	//Save settings for this NPC. These values will be added to the citizens saves.yml under this NPC.
 	public void save(DataKey key) {
-		key.setBoolean("SomeSetting",SomeSetting);
+		if (confirmedTargetSt !=null) key.setString("assassinTarget", confirmedTargetSt);
+		else if (key.keyExists("assassinTarget")) key.removeKey("assassinTarget");
 	}
 
 	@EventHandler
 	public void click(NPCClickEvent event){
-		//Handle a click on a NPC. The event has a getNPC() method. 
-		//Be sure to check event.getNPC() == this.getNPC() so you only handle clicks on this NPC!
 		if(event.getNPC() == this.getNPC()){
-			npc.getNavigator();
+			//stuff
 		}
 	}
 
@@ -50,6 +43,7 @@ public class AssassinTrait extends Trait {
 	@Override
 	public void onAttach() {
 		plugin.getServer().getLogger().info(npc.getName() + "has been assigned Assassin!");
+		
 	}
 
       // Run code when the NPC is despawned. This is called before the entity actually despawns so npc.getBukkitEntity() is still valid.
@@ -69,4 +63,9 @@ public class AssassinTrait extends Trait {
 	public void onRemove() {
       }
 
+	public boolean isKillable(Player targetToCheck){
+		if (targetToCheck != null && targetToCheck.isOnline() && targetToCheck.getWorld() == npc.getBukkitEntity().getLocation().getWorld()){
+			return true;
+		}else return false;
+	}
 }
